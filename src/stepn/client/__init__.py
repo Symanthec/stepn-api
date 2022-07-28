@@ -64,9 +64,14 @@ class Client:
         self.session_id = None
         return False
 
-    def run(self, command: str, parameters=None, method=get) -> Response:
+    def run(self, command: str, parameters=None, method=get) -> Union[dict, str]:
         if parameters is None:
             parameters = {}
         parameters["sessionID"] = self.session_id
         response = method(self.__url_prefix + command, params=parameters)
-        return response.json()
+        body = response.json()
+
+        if body is None:
+            url = response.request.url.partition("?")[0]
+            raise RuntimeError(f"Error occurred while accessing {url}\n{response.text}")
+        return body
