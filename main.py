@@ -1,27 +1,49 @@
-from stepn.client import *
+import json
+from os import getenv
 
-email = input("Enter user E-Mail:")
-password = input("Enter user password:")
+from stepn.client import Client
 
-client = Client()
-login = client.login(email, password, lambda: input("Enter Google authenticator code:"))
 
-if login:
-    print("Login successful!")
+def login(my_client: Client, anonymous_mode: bool = True) -> bool:
+    # for the sake of security anonymous mode is turned on by default
 
-    searchParams = {
-        "order": 2001,
-        "chain": 103,
-        "refresh": True,
-        "search": '',
-        "page": 1,
-        "otd": '',
-        "type": '',
-        "gType": '',
-        "quality": '',
-        'level': 0,
-        'bread': 0
-    }
+    if not anonymous_mode:
+        # try to log in using session ID from environment
+        session_id = getenv("sessionID")
+        my_client.session_id = session_id
+        if my_client.ping():
+            return True
 
-    response = client.run("orderlist", searchParams)
-    print(response)
+        # falling back to saved in environment email and password
+        email = getenv("email") or input("User E-Mail:")
+        password = getenv("password") or input("User password:")
+    else:
+        email = input("User E-Mail:")
+        password = input("User password:")
+
+    # didn't log in with prev credentials
+    # reset the session ID
+    my_client.session_id = None
+
+    def auth_callback():
+        # google authenticator callback
+        # called if account is secured with it
+        return input("Google authenticator:")
+
+    if my_client.login(email, password, auth_callback):
+        if not anonymous_mode:
+            # save parameters into JSON file
+            # they can later be imported with EnvFile plugin
+            with open("env.json", 'w') as environ_file:
+                json.dump({
+                    "email": email,
+                    "password": password,
+                    "sessionID": my_client.session_id
+                }, environ_file)
+        return True
+    return False
+
+
+if __name__ == '__main__':
+    client = Client()
+    login(client, False)
