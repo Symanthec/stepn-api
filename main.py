@@ -1,49 +1,40 @@
-import json
-from os import getenv
-
+from stepn.util import Environment
 from stepn.client import Client
 
 
 def login(my_client: Client, anonymous_mode: bool = True) -> bool:
-    # for the sake of security anonymous mode is turned on by default
-
     if not anonymous_mode:
-        # try to log in using session ID from environment
-        session_id = getenv("sessionID")
-        my_client.session_id = session_id
+        env = Environment()
+        my_client.session_id = env.get_property("sessionID")
         if my_client.ping():
             return True
 
-        # falling back to saved in environment email and password
-        email = getenv("email") or input("User E-Mail:")
-        password = getenv("password") or input("User password:")
+        email = env.get_property("email") or input("Enter user E-Mail:")
+        password = env.get_property("password") or input("Enter user password:")
     else:
+        my_client = Client()
+
         email = input("User E-Mail:")
         password = input("User password:")
 
-    # didn't log in with prev credentials
-    # reset the session ID
-    my_client.session_id = None
-
     def auth_callback():
-        # google authenticator callback
-        # called if account is secured with it
-        return input("Google authenticator:")
+        # Google authenticator callback
+        # Only called if account is secured with it
+        return input("Enter Google authenticator code:")
 
     if my_client.login(email, password, auth_callback):
         if not anonymous_mode:
-            # save parameters into JSON file
-            # they can later be imported with EnvFile plugin
-            with open("env.json", 'w') as environ_file:
-                json.dump({
-                    "email": email,
-                    "password": password,
-                    "sessionID": my_client.session_id
-                }, environ_file)
+            # noinspection PyUnboundLocalVariable
+            # since 'env' is only used in 'public' mode
+            env.set_property("email", email)
+            env.set_property("password", password)
+            env.set_property("sessionID", my_client.session_id)
+            env.save()
         return True
     return False
 
 
 if __name__ == '__main__':
     client = Client()
-    login(client, False)
+    if login(client, False):
+        print("Logged in!")
