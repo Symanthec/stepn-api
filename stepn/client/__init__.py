@@ -62,4 +62,6 @@ class Client:
         if parameters is None:
             parameters = {}
         parameters["sessionID"] = self.session_id
-        return method(self.__url_prefix + command, params=parameters)
+        response = method(self.__url_prefix + command, params=parameters)
+        return response.json()
+
