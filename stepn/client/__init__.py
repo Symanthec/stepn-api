@@ -43,9 +43,8 @@ class Client:
             "deviceInfo": "web"
         }
         response = self.run("login", url_params)
-        obj = response.json()
-        if obj["code"] == 0:
-            data = obj['data']
+        if response["code"] == 0:
+            data = response['data']
             self.session_id = data["sessionID"]
 
             login = True
@@ -56,7 +55,7 @@ class Client:
                     "sessionID": self.session_id
                 }
                 response = self.run('doCodeCheck', url_params)
-                login = response.json()['code'] == 0
+                login = response['code'] == 0
 
             if login:
                 return True

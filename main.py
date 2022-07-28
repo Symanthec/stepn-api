@@ -24,4 +24,4 @@ if login:
     }
 
     response = client.run("orderlist", searchParams)
-    print(response.text)
+    print(response)
