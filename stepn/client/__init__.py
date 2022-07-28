@@ -19,6 +19,13 @@ class Client:
     def __init__(self, new_session_id=None):
         self.session_id = new_session_id
 
+    def ping(self) -> bool:
+        """ Requests basic user info. If response contains code 0, then sessionID is valid. """
+        try:
+            return self.run("userbasic")['code'] == 0
+        except RuntimeError:
+            return False
+
     def login(self, email: str, password: str, auth_callback: Callable[[], str], mode: LoginMode = LoginMode.PASSWORD) \
             -> bool:
         """
@@ -64,4 +71,3 @@ class Client:
         parameters["sessionID"] = self.session_id
         response = method(self.__url_prefix + command, params=parameters)
         return response.json()
-
