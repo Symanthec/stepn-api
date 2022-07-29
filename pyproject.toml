@@ -1,0 +1,13 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name="stepn"
+version="0.1"
+authors=[
+    { name = "Ilya Reznik", email = "rez2004ilya@gmail.com" },
+]
+description = "Simple STEPN REST API library"
+readme = "README.MD"
+requires-python = ">=3.9"
