@@ -1,0 +1,5 @@
+# Default ignored files
+/.idea/
+/env.json
+/dist/
+/venv/
