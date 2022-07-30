@@ -1,8 +1,9 @@
-from .passhash import PasswordHasher
-from .loginmode import LoginMode
-
 from typing import *
-from requests import get, Response, JSONDecodeError
+
+from requests import get, JSONDecodeError
+
+from .loginmode import LoginMode
+from .passhash import PasswordHasher
 
 
 class Client:
@@ -42,7 +43,7 @@ class Client:
             "type": mode.value,
             "deviceInfo": "web"
         }
-        response = self.run("login", url_params)
+        response = self.run("login", **url_params)
         if response["code"] == 0:
             data = response['data']
             self.session_id = data["sessionID"]
@@ -50,11 +51,7 @@ class Client:
             login = True
             if data['gAuthState'] == 1:
                 # requires google authentication
-                url_params = {
-                    "codeData": f"2:{auth_callback()}",
-                    "sessionID": self.session_id
-                }
-                response = self.run('doCodeCheck', url_params)
+                response = self.run('doCodeCheck', codeData=f"2:{auth_callback()}")
                 login = response['code'] == 0
 
             if login:
@@ -64,11 +61,9 @@ class Client:
         self.session_id = None
         return False
 
-    def run(self, command: str, parameters=None, method=get) -> Union[dict, str]:
-        if parameters is None:
-            parameters = {}
+    def run(self, command: str, __method=get, **parameters) -> dict:
         parameters["sessionID"] = self.session_id
-        response = method(self.__url_prefix + command, params=parameters)
+        response = __method(self.__url_prefix + command, params=parameters)
 
         try:
             body = response.json()
@@ -79,3 +74,9 @@ class Client:
             url = response.request.url.split("?")[0]
             raise RuntimeError(f"Error occurred while accessing {url}\n{response.text}")
         return body
+
+    def userbasic(self):
+        return self.run("userbasic")
+
+    def orderdata(self, order_id: int):
+        return self.run("orderdata", orderId=order_id)
