@@ -1,6 +1,6 @@
 from json import load, dump
 from os import getenv
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 
 
 class Environment:
@@ -16,11 +16,13 @@ class Environment:
             pass
 
     def get_property(self, key: str, default: Any = None) -> Optional[Any]:
+        return self.get_property_or_run(key, lambda: default)
+
+    def get_property_or_run(self, key: str, callback: Callable[[str], Any]) -> Optional[Any]:
         if key not in self.__dictionary:
             # try searching elsewhere
             if not self.update_property(key):
-                self.__dictionary[key] = default
-                return default
+                self.__dictionary[key] = callback(key)
         return self.__dictionary[key]
 
     def update_property(self, key):
