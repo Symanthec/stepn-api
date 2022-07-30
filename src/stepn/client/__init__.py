@@ -2,7 +2,7 @@ from .passhash import PasswordHasher
 from .loginmode import LoginMode
 
 from typing import *
-from requests import get, Response
+from requests import get, Response, JSONDecodeError
 
 
 class Client:
@@ -64,9 +64,18 @@ class Client:
         self.session_id = None
         return False
 
-    def run(self, command: str, parameters=None, method=get) -> Response:
+    def run(self, command: str, parameters=None, method=get) -> Union[dict, str]:
         if parameters is None:
             parameters = {}
         parameters["sessionID"] = self.session_id
         response = method(self.__url_prefix + command, params=parameters)
-        return response.json()
+
+        try:
+            body = response.json()
+        except JSONDecodeError:
+            body = None
+
+        if body is None:
+            url = response.request.url.split("?")[0]
+            raise RuntimeError(f"Error occurred while accessing {url}\n{response.text}")
+        return body
