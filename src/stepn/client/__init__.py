@@ -33,7 +33,7 @@ class Client:
     def ping(self) -> bool:
         """ Requests basic user info. If response contains code 0, then sessionID is valid. """
         try:
-            return self.userbasic()[self.STATUS_CODE] == 0
+            return self.is_response_good(self.userbasic())
         except RuntimeError:
             return False
 

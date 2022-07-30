@@ -2,6 +2,8 @@ from json import dump, load
 from os import getenv
 from typing import *
 
+from .urlparams import URLParams
+
 
 class Environment:
     __default_path = 'env.json'
@@ -38,3 +40,4 @@ class Environment:
                 return True
         except FileNotFoundError:
             return False
+
