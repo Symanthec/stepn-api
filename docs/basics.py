@@ -1,7 +1,7 @@
-from stepn.client import Client, LoginMode
+from stepn.client import LoginMode, Client
 
 
-def login(email, password) -> Client:
+def login(_email, _password) -> Client:
     # Client class automates requests to STEPN API
     client = Client()
 
@@ -34,22 +34,25 @@ def login(email, password) -> Client:
     """
 
     # Now we may log in
-    success = client.login(email, password, auth_callback, mode)
+    success = client.login(_email, _password, auth_callback, mode)
     if success:
         print("I've learned basics of stepn-api library!")
         return client
 
 
 if __name__ == '__main__':
-    new_client = login()
+    email = input("Enter your E-Mail:")
+    password = input("Enter your password:")
 
-    # After successful login, you can claim session ID
-    session_id = new_client.session_id
+    new_client = login(email, password)
+    if new_client:
+        # After successful login, you can claim session ID
+        session_id = new_client.session_id
 
-    # You can't log in with one account on two clients
-    # However, you can then feed your session_id into another client
-    second_client = Client(session_id)
+        # You can't log in with one account on two clients
+        # However, you can then feed your session_id into another client
+        second_client = Client(session_id)
 
-    # Also you can check, if the session ID that you provided is working by calling
-    if second_client.ping():
-        print("Now two clients can work simultaneously!")
+        # Also you can check, if the session ID that you provided is working by calling
+        if second_client.ping():
+            print("Now two clients can work simultaneously!")
