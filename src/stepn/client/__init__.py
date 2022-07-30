@@ -9,6 +9,10 @@ from .passhash import PasswordHasher
 class Client:
     __url_prefix = "https://api.stepn.com/run/"
 
+    STATUS_CODE = 'code'
+    RESPONSE_DATA = 'data'
+    ERROR_MESSAGE = 'msg'
+
     @property
     def session_id(self):
         return self.__session_id
@@ -20,15 +24,21 @@ class Client:
     def __init__(self, new_session_id=None):
         self.session_id = new_session_id
 
+    def extract_data(self, dictionary: dict) -> Any:
+        return dictionary[self.RESPONSE_DATA] or None
+
+    def is_response_good(self, response: dict) -> bool:
+        return response[self.STATUS_CODE] == 0
+
     def ping(self) -> bool:
         """ Requests basic user info. If response contains code 0, then sessionID is valid. """
         try:
-            return self.run("userbasic")['code'] == 0
+            return self.userbasic()[self.STATUS_CODE] == 0
         except RuntimeError:
             return False
 
-    def login(self, email: str, password: str, auth_callback: Callable[[], str], mode: LoginMode = LoginMode.PASSWORD) \
-            -> bool:
+    def login(self, email: str, password: Union[int, str], auth_callback: Callable[[], str],
+              mode: LoginMode = LoginMode.PASSWORD) -> bool:
         """
         Attempts to generate Session ID by trying to log in as a StepN user
         :param auth_callback: function to be called, that should return Google authenticator code
@@ -44,15 +54,14 @@ class Client:
             "deviceInfo": "web"
         }
         response = self.run("login", **url_params)
-        if response["code"] == 0:
-            data = response['data']
+        if self.is_response_good(response):
+            data = self.extract_data(response)
             self.session_id = data["sessionID"]
 
             login = True
             if data['gAuthState'] == 1:
                 # requires google authentication
-                response = self.run('doCodeCheck', codeData=f"2:{auth_callback()}")
-                login = response['code'] == 0
+                login = self.do_code_check(auth_callback())
 
             if login:
                 return True
@@ -75,8 +84,17 @@ class Client:
             raise RuntimeError(f"Error occurred while accessing {url}\n{response.text}")
         return body
 
+    def do_code_check(self, code: Union[int, str]) -> bool:
+        return self.is_response_good(self.run('doCodeCheck', codeData=f"2:{code}"))
+
     def userbasic(self):
         return self.run("userbasic")
 
-    def orderdata(self, order_id: int):
-        return self.run("orderdata", orderId=order_id)
+    def order_data(self, order_id: Union[int, str]):
+        return self.extract_data(self.run("orderdata", orderId=order_id)) or {}
+
+    def order_list(self, **order_query) -> []:
+        return self.extract_data(self.run("orderlist", **order_query)) or []
+
+    def buy_prop(self, order_id: Union[int, str], price: Union[int, str]) -> bool:
+        return self.is_response_good(self.run("buyprop", orderID=order_id, price=price))
