@@ -1,8 +1,9 @@
 from typing import Any, Union, Callable
 
-from requests import get, JSONDecodeError
+from requests import JSONDecodeError, Session
 
-from stepn.client import LoginMode, PasswordHasher
+from .loginmode import LoginMode
+from .passhash import PasswordHasher
 
 
 class Client:
@@ -21,6 +22,7 @@ class Client:
         self.__session_id = value
 
     def __init__(self, new_session_id=None):
+        self.session = Session()
         self.session_id = new_session_id
 
     def extract_data(self, dictionary: dict) -> Any:
@@ -69,9 +71,11 @@ class Client:
         self.session_id = None
         return False
 
-    def run(self, command: str, __method=get, **parameters) -> dict:
+    def run(self, command: str, **parameters) -> dict:
         parameters["sessionID"] = self.session_id
-        response = __method(self.__url_prefix + command, params=parameters)
+
+        # replace __method with session's identical
+        response = self.session.get(self.__url_prefix + command, params=parameters)
 
         try:
             body = response.json()

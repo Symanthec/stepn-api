@@ -16,7 +16,7 @@ class Environment:
             pass
 
     def get_property(self, key: str, default: Any = None) -> Optional[Any]:
-        return self.get_property_or_run(key, lambda: default)
+        return self.get_property_or_run(key, lambda x: default)
 
     def get_property_or_run(self, key: str, callback: Callable[[str], Any]) -> Optional[Any]:
         if key not in self.__dictionary:

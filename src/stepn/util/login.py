@@ -22,12 +22,12 @@ def login(anonymous_mode: bool = True,
         env_session = env.get_property("sessionID")
         client = Client(env_session)
 
-        if client.ping():
+        if env_session and client.ping():
             return client
         else:
             # login using existing E-Mail and password
-            email = env.get_property("email", prompt("Enter user E-Mail:"))
-            password = env.get_property("password", prompt("Enter user password:"))
+            email = env.get_property_or_run("email", prompt("Enter user E-Mail:"))
+            password = env.get_property_or_run("password", prompt("Enter user password:"))
 
             if client.login(email, password, prompt("Enter Google authenticator code:"), mode):
                 # noinspection PyUnboundLocalVariable
