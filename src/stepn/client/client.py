@@ -1,9 +1,11 @@
-from typing import Any, Union, Callable
+import logging
+from typing import Union, Callable, Dict, List, Optional
 
 from requests import JSONDecodeError, Session
 
 from .loginmode import LoginMode
 from .passhash import PasswordHasher
+from .response import Response
 
 
 class Client:
@@ -25,18 +27,9 @@ class Client:
         self.session = Session()
         self.session_id = new_session_id
 
-    def extract_data(self, dictionary: dict) -> Any:
-        return dictionary[self.RESPONSE_DATA] or None
-
-    def is_response_good(self, response: dict) -> bool:
-        return response[self.STATUS_CODE] == 0
-
     def ping(self) -> bool:
         """ Requests basic user info. If response contains code 0, then sessionID is valid. """
-        try:
-            return self.is_response_good(self.userbasic())
-        except RuntimeError:
-            return False
+        return self.userbasic() is not None
 
     def login(self, email: str, password: Union[int, str], auth_callback: Callable[[], str],
               mode: LoginMode = LoginMode.PASSWORD) -> bool:
@@ -54,50 +47,43 @@ class Client:
             "type": mode.value,
             "deviceInfo": "web"
         }
-        response = self.run("login", **url_params)
-        if self.is_response_good(response):
-            data = self.extract_data(response)
-            self.session_id = data["sessionID"]
 
-            login = True
+        if response := self.run("login", **url_params):
+            data = response.get_data()
+            self.session_id = data["sessionID"]
             if data['gAuthState'] == 1:
                 # requires google authentication
-                login = self.do_code_check(auth_callback())
-
-            if login:
+                return self.do_code_check(auth_callback())
+            else:
                 return True
-
         # reset session ID
         self.session_id = None
         return False
 
-    def run(self, command: str, **parameters) -> dict:
+    def run(self, command: str, **parameters) -> Optional[Response]:
         parameters["sessionID"] = self.session_id
-
-        # replace __method with session's identical
-        response = self.session.get(self.__url_prefix + command, params=parameters)
+        url = self.__url_prefix + command
+        web_response = self.session.get(url, params=parameters)
 
         try:
-            body = response.json()
+            response = Response(web_response.json())
         except JSONDecodeError:
-            body = None
+            logging.error(f"Error occurred while accessing {url}:\n{web_response.text}")
+            return None
 
-        if body is None:
-            url = response.request.url.split("?")[0]
-            raise RuntimeError(f"Error occurred while accessing {url}\n{response.text}")
-        return body
+        return response
 
     def do_code_check(self, code: Union[int, str]) -> bool:
-        return self.is_response_good(self.run('doCodeCheck', codeData=f"2:{code}"))
+        return self.run('doCodeCheck', codeData=f"2:{code}").is_successful()
 
-    def userbasic(self):
+    def userbasic(self) -> Response:
         return self.run("userbasic")
 
-    def order_data(self, order_id: Union[int, str]):
-        return self.extract_data(self.run("orderdata", orderId=order_id)) or {}
+    def order_data(self, order_id: Union[int, str]) -> Dict:
+        return self.run("orderdata", orderId=order_id).get_data() or {}
 
-    def order_list(self, **order_query) -> []:
-        return self.extract_data(self.run("orderlist", **order_query)) or []
+    def order_list(self, **order_query) -> List:
+        return self.run("orderlist", **order_query).get_data() or []
 
     def buy_prop(self, order_id: Union[int, str], price: Union[int, str]) -> bool:
-        return self.is_response_good(self.run("buyprop", orderID=order_id, price=price))
+        return self.run("buyprop", orderID=order_id, price=price).is_successful()

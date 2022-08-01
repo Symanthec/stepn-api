@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from stepn.client import Client, LoginMode
@@ -15,9 +16,10 @@ def login(anonymous_mode: bool = True,
         client = Client()
         email = input("Enter user E-Mail:")
         password = input("Enter user password:")
-        for it in range(attempts):
-            if it > 0:
-                print(f"Login attempt #{it}")
+
+        for attempt in range(attempts):
+            if attempt > 0:
+                logging.warning(f"Login reattempt #{attempt}")
             if client.login(email, password, google_auth_dialog(), mode):
                 return client
 
@@ -34,10 +36,11 @@ def login(anonymous_mode: bool = True,
             password = env.get_property_or_run("password", prompt("Enter user password:"))
             auth_callback = google_auth_dialog(env)
 
-            for it in range(attempts):
-                if it > 0:
-                    print(f"Login attempt #{it}")
+            for attempt in range(attempts):
+                if attempt > 0:
+                    logging.warning(f"Login reattempt #{attempt}")
                 if client.login(email, password, auth_callback, mode):
+                    print("Success")
                     # noinspection PyUnboundLocalVariable
                     # since 'env' is only used in 'public' mode
                     env.set_property("email", email)
