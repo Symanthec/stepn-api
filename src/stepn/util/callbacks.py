@@ -1,7 +1,7 @@
 from onetimepass import get_totp
 
-from stepn.util import Environment
-from stepn.util.secretcheck import is_valid_secret
+from ..util import Environment
+from ..util.secretcheck import is_valid_secret
 
 
 def prompt(message):

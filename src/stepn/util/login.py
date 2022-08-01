@@ -1,9 +1,9 @@
 import logging
 from typing import Optional
 
-from stepn.client import Client, LoginMode
-from stepn.util import Environment
-from stepn.util.callbacks import prompt, google_auth_dialog
+from ..client import Client, LoginMode
+from ..util import Environment
+from ..util.callbacks import prompt, google_auth_dialog
 
 
 def login(anonymous_mode: bool = True,

@@ -1,4 +1,4 @@
-from stepn.util import URLParams
+from ..util import URLParams
 from .enums import *
 
 from typing import *

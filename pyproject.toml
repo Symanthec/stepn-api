@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name="stepn"
-version="0.1.1-session"
+version="0.1.2.dev"
 authors=[
     { name = "Ilya Reznik", email = "rez2004ilya@gmail.com" },
 ]

@@ -1,5 +1,5 @@
-from stepn.client import Client
-from stepn.typing import JsonNumber
+from .client import Client
+from .typing import JsonNumber
 
 
 class Order:
