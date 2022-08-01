@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Any
 
 
 class Response:
@@ -14,5 +14,5 @@ class Response:
     def get_message(self) -> Optional[str]:
         return self._message
 
-    def get_data(self) -> Optional[Union[dict, list]]:
+    def get_data(self) -> Any:
         return self._data or None
