@@ -1,10 +1,9 @@
-from .client import Client
 from .typing import JsonNumber
 
 
 class Order:
 
-    def __init__(self, client: Client, order_id: int):
+    def __init__(self, client, order_id: int):
         self._client = client
         self._order_id = order_id
 

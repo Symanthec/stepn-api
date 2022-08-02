@@ -13,20 +13,20 @@ def login(anonymous_mode: bool = True,
     """ Attempts to log in into account and, in case of success, returns Client """
     if anonymous_mode:
         # login manually
-        client = Client()
+        client = Client(google_auth_dialog())
         email = input("Enter user E-Mail:")
         password = input("Enter user password:")
 
         for attempt in range(attempts):
             if attempt > 0:
                 logging.warning(f"Login reattempt #{attempt}")
-            if client.login(email, password, google_auth_dialog(), mode):
+            if client.login(email, password, mode):
                 return client
 
     else:
         # login
         env_session = env.get_property("sessionID")
-        client = Client(env_session)
+        client = Client(google_auth_dialog(env), env_session)
 
         if env_session and client.ping():
             return client
@@ -34,13 +34,11 @@ def login(anonymous_mode: bool = True,
             # login using existing E-Mail and password
             email = env.get_property_or_run("email", prompt("Enter user E-Mail:"))
             password = env.get_property_or_run("password", prompt("Enter user password:"))
-            auth_callback = google_auth_dialog(env)
 
             for attempt in range(attempts):
                 if attempt > 0:
                     logging.warning(f"Login reattempt #{attempt}")
-                if client.login(email, password, auth_callback, mode):
-                    print("Success")
+                if client.login(email, password, mode):
                     # noinspection PyUnboundLocalVariable
                     # since 'env' is only used in 'public' mode
                     env.set_property("email", email)
